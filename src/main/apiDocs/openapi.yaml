@@ -1,0 +1,162 @@
+openapi: 3.0.0
+info:
+  title: Shopping With Promotions API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/
+paths:
+  /checkout:
+    post:
+      summary: Checkout shopping cart items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CheckoutFilledResponse"
+                  - $ref: "#/components/schemas/CheckoutUnfilledResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: array
+                    items:
+                      properties:
+                        message:
+                          type: string
+                          example: "must have required property 'orders'"
+components:
+  schemas:
+    SKU:
+      type: string
+      description: Unique identifier for a product
+      example: "120P90"
+    Order:
+      type: object
+      properties:
+        sku:
+          $ref: "#/components/schemas/SKU"
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+      required:
+        - sku
+        - quantity
+    CheckoutRequest:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+          minItems: 1
+          example:
+            - sku: "120P90"
+              quantity: 1
+            - sku: "43N23P"
+              quantity: 1
+            - sku: "234234"
+              quantity: 1
+      required:
+        - orders
+    OrderDetail:
+      type: object
+      properties:
+        sku:
+          $ref: "#/components/schemas/SKU"
+        name:
+          type: string
+          example: "Google Home"
+        retailPrice:
+          type: number
+          format: float
+          minimum: 0
+          example: 49.99
+        discountedPrice:
+          type: number
+          format: float
+          minimum: 0
+          example: 0.00
+    CheckoutFilledResponse:
+      type: object
+      properties:
+        filled:
+          type: boolean
+          example: true
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderDetail"
+          minItems: 1
+          example:
+            - sku: "120P90"
+              name: "Google Home"
+              retailPrice: 49.99
+              discountedPrice: 49.99
+            - sku: "43N23P"
+              name: "MacBook Pro"
+              retailPrice: 5399.99
+              discountedPrice: 5399.99
+            - sku: "234234"
+              name: "Raspberry Pi B"
+              retailPrice: 30.00
+              discountedPrice: 0.00
+        cost:
+          type: number
+          format: float
+          minimum: 0
+          example: 5449.98
+    ShortageDetail:
+      type: object
+      properties:
+        sku:
+          $ref: "#/components/schemas/SKU"
+        name:
+          type: string
+          example: "Google Home"
+        requestQty:
+          type: integer
+          minimum: 1
+          example: 10
+        inventory:
+          type: integer
+          minimum: 0
+          example: 4
+      required:
+        - sku
+        - name
+        - requestQty
+        - inventory
+    CheckoutUnfilledResponse:
+      type: object
+      properties:
+        filled:
+          type: boolean
+          example: false
+        shortages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShortageDetail"
+          minItems: 1
+          example:
+            - sku: "120P90"
+              name: "Google Home"
+              requestQty: 3
+              inventory: 2
+            - sku: "A304SD"
+              name: "Alexa Speaker"
+              requestQty: 5
+              inventory: 2
